@@ -4,7 +4,7 @@
 [![Lint Status](https://github.com/jeremmfr/iptables-api/workflows/GolangCI-Lint/badge.svg)](https://github.com/jeremmfr/iptables-api/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jeremmfr/iptables-api)](https://goreportcard.com/report/github.com/jeremmfr/iptables-api)
 
-Create API REST for iptables command
+GO REST API for iptables using jwt authentication
 
 Compile:
 --------
@@ -14,7 +14,7 @@ go build -o iptables-api
 Run:
 ----
     ./iptables-api -h
-	Usage of /root/iptables-api:
+	Usage of iptables-api:
 	  -e envfile
 		file containing server and security parameters 
 	  -cert string
@@ -23,16 +23,17 @@ Run:
 	        https = true or false
 	  -ip string
 	        listen on IP (default "127.0.0.1")
+	  -port string
+	        listen on port (default "8080")
 	  -key string
 	        file of key for https
 	  -log string
 	        file for access log (default "/var/log/iptables-api.access.log")
-	  -port string
-	        listen on port (default "8080")
 	  -save_path string
-			path for backups => /save (default "/var/backups/iptables-api/")
+		path for backups => /save (default "/var/backups/iptables-api/")
 
-    ./iptables-api -https -ip=127.0.0.1 -port=8080 -log=/var/log/iptables-api.access.log -cert=cert.pem -key=key.pem
+    ./iptables-api -https -ip=XXX.XXX.XXX.XXX -port=XXX -log=/path/to/access.log -cert=cert.pem -key=key.pem
+    ./iptables-api -ip=XXX.XXX.XXX.XXX -port=XXX -log=/path/to/access.log
 
 API List :
 ---------
@@ -83,8 +84,9 @@ Rename chain with the parameters
 
 **Save & Restore:**
 
-Save: iptables-save > /etc/iptables/rules.v4 && cp /etc/iptables/rules.v4 /var/backups/iptables-api/rules.v4.2006-01-02.15-04-05
-Restore: iptables-restore $file
+- Save: iptables-save > /etc/iptables/rules.v4 && cp /etc/iptables/rules.v4 /var/backups/iptables-api/rules.v4.2006-01-02.15-04-05
+
+- Restore: iptables-restore $file
 
 	GET /save/
 	curl -H 'Authorization: bearer token' -i -X GET http://127.0.0.1:8080/save/
