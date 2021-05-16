@@ -147,11 +147,11 @@ func CheckPosNat(r *http.Request) ([]string, error) {
 func addNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -206,11 +206,11 @@ func addNat(w http.ResponseWriter, r *http.Request) {
 func delNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -256,11 +256,11 @@ func delNat(w http.ResponseWriter, r *http.Request) {
 func checkNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	

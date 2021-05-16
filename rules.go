@@ -140,11 +140,11 @@ func checkPosRules(r *http.Request) ([]string, error) {
 func addRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -178,11 +178,11 @@ func addRules(w http.ResponseWriter, r *http.Request) {
 func delRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -207,11 +207,11 @@ func delRules(w http.ResponseWriter, r *http.Request) {
 func checkRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	

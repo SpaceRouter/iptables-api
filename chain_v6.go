@@ -11,11 +11,11 @@ import (
 func addChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -36,11 +36,11 @@ func addChainV6(w http.ResponseWriter, r *http.Request) {
 func delChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -69,11 +69,11 @@ func delChainV6(w http.ResponseWriter, r *http.Request) {
 func listChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -97,11 +97,11 @@ func listChainV6(w http.ResponseWriter, r *http.Request) {
 func renameChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	

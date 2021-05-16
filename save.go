@@ -14,11 +14,11 @@ import (
 func saveRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -57,11 +57,11 @@ func saveRules(w http.ResponseWriter, r *http.Request) {
 func restoreRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	

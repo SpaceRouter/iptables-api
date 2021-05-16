@@ -147,11 +147,11 @@ func checkPosRaw(r *http.Request) ([]string, error) {
 func addRaw(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -185,11 +185,11 @@ func addRaw(w http.ResponseWriter, r *http.Request) {
 func delRaw(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
@@ -214,11 +214,11 @@ func delRaw(w http.ResponseWriter, r *http.Request) {
 func checkRaw(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
     if err != nil {
-        w.WriteHeader(http.StatusForbidden)
+        w.WriteHeader(http.StatusUnauthorized)
         return
     }
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusUnauthorized)
+        w.WriteHeader(http.StatusForbidden)
         return
     }
 	
