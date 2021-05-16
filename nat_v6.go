@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
 )
@@ -147,21 +145,20 @@ func checkPosNatV6(r *http.Request) ([]string, error) {
 
 // PUT /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func addNatV6(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	var rulespecs []string
@@ -169,13 +166,11 @@ func addNatV6(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("nth_every") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth every")
-
 			return
 		}
 		if r.URL.Query().Get("nth_packet") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth packet")
-
 			return
 		}
 	}
@@ -186,7 +181,6 @@ func addNatV6(w http.ResponseWriter, r *http.Request) {
 		rulespecs = snatGenerateV6(r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-
 		return
 	}
 	if ipt.HasWait {
@@ -196,7 +190,6 @@ func addNatV6(w http.ResponseWriter, r *http.Request) {
 		position, err := strconv.Atoi(r.URL.Query().Get("position"))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		respErr = ipt.Insert("nat", vars["chain"], position, rulespecs...)
@@ -211,22 +204,20 @@ func addNatV6(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func delNatV6(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	var rulespecs []string
@@ -234,13 +225,11 @@ func delNatV6(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("nth_every") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth every")
-
 			return
 		}
 		if r.URL.Query().Get("nth_packet") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth packet")
-
 			return
 		}
 	}
@@ -251,7 +240,6 @@ func delNatV6(w http.ResponseWriter, r *http.Request) {
 		rulespecs = snatGenerateV6(r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-
 		return
 	}
 	if ipt.HasWait {
@@ -266,45 +254,39 @@ func delNatV6(w http.ResponseWriter, r *http.Request) {
 
 // GET /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func checkNatV6(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	if r.URL.Query().Get("position") != "" {
 		posNat, err := checkPosNatV6(r)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		switch {
 		case len(posNat) == 0:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		case len(posNat) != 1:
 			w.WriteHeader(http.StatusConflict)
-
 			return
 		case posNat[0] == r.URL.Query().Get("position"):
 			return
 		default:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		}
 	}
@@ -313,13 +295,11 @@ func checkNatV6(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("nth_every") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth every")
-
 			return
 		}
 		if r.URL.Query().Get("nth_packet") == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "Missing nth packet")
-
 			return
 		}
 	}
@@ -330,7 +310,6 @@ func checkNatV6(w http.ResponseWriter, r *http.Request) {
 		rulespecs = snatGenerateV6(r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-
 		return
 	}
 	if ipt.HasWait {

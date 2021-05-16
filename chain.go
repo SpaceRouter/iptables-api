@@ -3,30 +3,26 @@ package main
 import (
 	"fmt"
 	"net/http"
-
-	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
 )
 
 // PUT /chain/{table}/{name}/
 func addChain(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	respErr = ipt.NewChain(vars["table"], vars["name"])
@@ -38,22 +34,20 @@ func addChain(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /chain/{table}/{name}/
 func delChain(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	// Clear chain before delete
@@ -72,22 +66,20 @@ func delChain(w http.ResponseWriter, r *http.Request) {
 
 // GET /chain/{table}/{name}/
 func listChain(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	respStr, respErr := ipt.List(vars["table"], vars["name"])
@@ -102,22 +94,20 @@ func listChain(w http.ResponseWriter, r *http.Request) {
 
 // PUT /mvchain/{table}/{oldname}/{newname}/
 func renameChain(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
-
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	respErr = ipt.RenameChain(vars["table"], vars["oldname"], vars["newname"])

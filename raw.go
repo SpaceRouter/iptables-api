@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
 )
@@ -147,21 +145,20 @@ func checkPosRaw(r *http.Request) ([]string, error) {
 
 // PUT /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func addRaw(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	rulespecs := rawGenerate(r)
@@ -172,7 +169,6 @@ func addRaw(w http.ResponseWriter, r *http.Request) {
 		position, err := strconv.Atoi(r.URL.Query().Get("position"))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		respErr = ipt.Insert("raw", vars["chain"], position, rulespecs...)
@@ -187,21 +183,20 @@ func addRaw(w http.ResponseWriter, r *http.Request) {
 
 // DELTE /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func delRaw(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	vars := mux.Vars(r)
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	rulespecs := rawGenerate(r)
@@ -217,20 +212,19 @@ func delRaw(w http.ResponseWriter, r *http.Request) {
 
 // GET /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func checkRaw(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	rulespecs := rawGenerate(r)
@@ -242,7 +236,6 @@ func checkRaw(w http.ResponseWriter, r *http.Request) {
 			if (r.URL.Query().Get("tcpflag1") != defaultFlagsMask) && (r.URL.Query().Get("tcpflag1") != SYNStr) && (r.URL.Query().Get("tcpflag1") != defaultFlagsMask2) {
 				w.WriteHeader(http.StatusBadRequest)
 				fmt.Fprintln(w, "tcpflag", r.URL.Query().Get("tcpflag1"), "and position not compatible")
-
 				return
 			}
 		}
@@ -250,30 +243,25 @@ func checkRaw(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Query().Get("tcpflag2") != SYNStr {
 				w.WriteHeader(http.StatusBadRequest)
 				fmt.Fprintln(w, "tcpflag", r.URL.Query().Get("tcpflag2"), "and position not compatible")
-
 				return
 			}
 		}
 		posRaw, err := checkPosRaw(r)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		switch {
 		case len(posRaw) == 0:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		case len(posRaw) != 1:
 			w.WriteHeader(http.StatusConflict)
-
 			return
 		case posRaw[0] == r.URL.Query().Get("position"):
 			return
 		default:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		}
 	} else {
@@ -282,12 +270,10 @@ func checkRaw(w http.ResponseWriter, r *http.Request) {
 		if respErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, respErr)
-
 			return
 		}
 		if !respStr {
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		}
 	}

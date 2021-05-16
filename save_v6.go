@@ -8,45 +8,38 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	auth "github.com/abbot/go-http-auth"
 )
 
 // GET /save_v6/
 func saveRulesV6(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
 
-			return
-		}
-	}
-
-	err := os.MkdirAll("/etc/iptables/", 0755)
+	err = os.MkdirAll("/etc/iptables/", 0755)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	stdout, err := exec.Command("ip6tables-save").Output()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	err = ioutil.WriteFile("/etc/iptables/rules.v6", stdout, 0644) // nolint: gosec
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	err = os.MkdirAll(*savePath, 0755)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	currentTime := time.Now().Local()
@@ -55,7 +48,6 @@ func saveRulesV6(w http.ResponseWriter, r *http.Request) {
 	err = cmd.Run()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	fmt.Fprintln(w, strings.Join(dstFile, ""))
@@ -63,20 +55,19 @@ func saveRulesV6(w http.ResponseWriter, r *http.Request) {
 
 // GET /restore_v6/{file}
 func restoreRulesV6(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
-	err := exec.Command("ip6tables-restore", r.URL.Query().Get("file")).Run()
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
+	err = exec.Command("ip6tables-restore", r.URL.Query().Get("file")).Run()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 }

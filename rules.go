@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
 )
@@ -140,21 +138,20 @@ func checkPosRules(r *http.Request) ([]string, error) {
 
 // PUT /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func addRules(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	if ipt.HasWait {
@@ -165,7 +162,6 @@ func addRules(w http.ResponseWriter, r *http.Request) {
 		position, err := strconv.Atoi(r.URL.Query().Get("position"))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		respErr = ipt.Insert("filter", vars["chain"], position, rulespecs...)
@@ -180,21 +176,20 @@ func addRules(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func delRules(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	if ipt.HasWait {
@@ -210,21 +205,20 @@ func delRules(w http.ResponseWriter, r *http.Request) {
 
 // GET /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func checkRules(w http.ResponseWriter, r *http.Request) {
-	if *htpasswdfile != "" {
-		htpasswd := auth.HtpasswdFileProvider(*htpasswdfile)
-		authenticator := auth.NewBasicAuthenticator("Basic Realm", htpasswd)
-		usercheck := authenticator.CheckAuth(r)
-		if usercheck == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-	}
+	user, err := auth.SrAuthHttp(r)
+    if err != nil {
+        w.WriteHeader(http.StatusForbidden)
+        return
+    }
+	if !user.HasRole(iptablesRole) {
+        w.WriteHeader(http.StatusUnauthorized)
+        return
+    }
+	
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
-
 		return
 	}
 	if ipt.HasWait {
@@ -234,23 +228,19 @@ func checkRules(w http.ResponseWriter, r *http.Request) {
 		posRules, err := checkPosRules(r)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
-
 			return
 		}
 		switch {
 		case len(posRules) == 0:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		case len(posRules) != 1:
 			w.WriteHeader(http.StatusConflict)
-
 			return
 		case posRules[0] == r.URL.Query().Get("position"):
 			return
 		default:
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		}
 	} else {
@@ -259,12 +249,10 @@ func checkRules(w http.ResponseWriter, r *http.Request) {
 		if respErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, respErr)
-
 			return
 		}
 		if !respStr {
 			w.WriteHeader(http.StatusNotFound)
-
 			return
 		}
 	}

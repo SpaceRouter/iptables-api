@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
+	"iptables-api/config"
+	"github.com/spacerouter/sr_auth"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
@@ -25,24 +26,31 @@ const (
 	defaultFlagsMask2 string            = "SYN,RST,ACK,FIN"
 )
 
+const (
+	iptablesRole	  sr_auth.Role		= "iptables"
+)
+
 var (
 	respErr      error
-	htpasswdfile *string
 	savePath     *string
+	auth		 *sr_auth.Auth
 )
 
 func main() {
+	environment := flag.String("e", "dev", "env file")
 	listenIP := flag.String("ip", "127.0.0.1", "listen on IP")
 	listenPort := flag.String("port", "8080", "listen on port")
 	https := flag.Bool("https", false, "https = true or false")
 	cert := flag.String("cert", "", "file of certificat for https")
 	key := flag.String("key", "", "file of key for https")
 	accessLogFile := flag.String("log", "/var/log/iptables-api.access.log", "file for access log")
-	htpasswdfile = flag.String("htpasswd", "", "htpasswd file for login:password")
 	savePath = flag.String("savepath", "/var/backups/iptables-api/", "path for backups file on /save")
 
 	flag.Parse()
-
+	config.Init(*environment)
+	tmp_auth := sr_auth.CreateAuth(config.GetSecretKey())
+	auth = &tmp_auth
+	
 	// accesslog file open
 	accessLog, err := os.OpenFile(*accessLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
