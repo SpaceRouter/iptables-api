@@ -49,6 +49,7 @@ Test,Add,Del iptables rule in table filter with the parameters
 	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
 	log-prefix only if action = LOG
 
+
 **Nat:**
 
 Test,Add,Del iptables rule in table nat with the parameters
@@ -58,6 +59,7 @@ Test,Add,Del iptables rule in table nat with the parameters
 	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00&except=true
 
 	with for source and destination _ instead / : 10.0.0.0_8
+
 
 **Raw:**
 
@@ -69,6 +71,7 @@ Test,Add,Del iptables rule in table raw with the parameters
 
 	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
 	log-prefix only if action = LOG
+
 
 **Chain:**
 
@@ -82,14 +85,18 @@ Rename chain with the parameters
 	PUT /mvchain/{table}/{oldname}/{newname}/
 	curl -H 'Authorization: bearer token' -i -X PUT http://127.0.0.1:8080/mvchain/{table}/{oldname}/{newname}/
 
+
 **Save & Restore:**
 
 - Save: iptables-save > /etc/iptables/rules.v4 && cp /etc/iptables/rules.v4 /var/backups/iptables-api/rules.v4.2006-01-02.15-04-05
 
-- Restore: iptables-restore $file
 
 	GET /save/
 	curl -H 'Authorization: bearer token' -i -X GET http://127.0.0.1:8080/save/
+
+
+- Restore: iptables-restore $file
+
 
 	PUT /restore/{file}
 	curl -H 'Authorization: bearer token' -i -X PUT http://127.0.0.1:8080/restore/{file}
