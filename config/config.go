@@ -1,9 +1,9 @@
 package config
 
 import (
+	"github.com/spf13/viper"
 	"log"
 	"path/filepath"
-	"github.com/spf13/viper"
 )
 
 var config *viper.Viper
@@ -31,26 +31,26 @@ func relativePath(basedir string, path *string) {
 	}
 }
 
-// Function GetConfig
+// GetConfig function
 func GetConfig() *viper.Viper {
 	return config
 }
 
-// Function GetSecretKey
+// GetSecretKey function
 func GetSecretKey() string {
 	configs := GetConfig()
 	key := configs.GetString("security.secret_key")
 	return key
 }
 
-// Function GetHost
+// GetHost function
 func GetHost() string {
 	configs := GetConfig()
 	host := configs.GetString("server.host")
 	return host
 }
 
-// Function GetPort
+// GetPort function
 func GetPort() string {
 	configs := GetConfig()
 	port := configs.GetString("server.port")

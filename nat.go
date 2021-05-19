@@ -68,7 +68,7 @@ func snatGenerate(r *http.Request) []string {
 	return rulespecs
 }
 
-// CheckPosNat
+// CheckPosNat function
 func CheckPosNat(r *http.Request) ([]string, error) {
 	vars := mux.Vars(r)
 	var linenumber []string

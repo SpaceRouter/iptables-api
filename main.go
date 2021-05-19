@@ -21,7 +21,7 @@ const (
 	logAct            string            = "LOG"
 	trueStr           string            = "true"
 	tcpStr            string            = "tcp"
-	SYNStr            string            = "SYN" //
+	SYNStr            string            = "SYN" // SYNStr const
 	defaultFlagsMask  string            = "FIN,SYN,RST,ACK"
 	defaultFlagsMask2 string            = "SYN,RST,ACK,FIN"
 )
