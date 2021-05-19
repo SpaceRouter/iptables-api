@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/jeremmfr/go-iptables/iptables"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
-	"github.com/gorilla/mux"
-	"github.com/jeremmfr/go-iptables/iptables"
 )
 
 func dnatGenerateV6(r *http.Request) []string {
@@ -146,15 +146,15 @@ func checkPosNatV6(r *http.Request) ([]string, error) {
 // PUT /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func addNatV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
@@ -205,15 +205,15 @@ func addNatV6(w http.ResponseWriter, r *http.Request) {
 // DELETE /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func delNatV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
@@ -255,15 +255,15 @@ func delNatV6(w http.ResponseWriter, r *http.Request) {
 // GET /nat_v6/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func checkNatV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {

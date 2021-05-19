@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/jeremmfr/go-iptables/iptables"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
-	"github.com/gorilla/mux"
-	"github.com/jeremmfr/go-iptables/iptables"
 )
 
 func dnatGenerate(r *http.Request) []string {
@@ -35,7 +35,7 @@ func dnatGenerate(r *http.Request) []string {
 	if r.URL.Query().Get("nth_every") != "" {
 		rulespecs = append(rulespecs, "-m", "statistic", "--mode", "nth", "--every", r.URL.Query().Get("nth_every"), "--packet", r.URL.Query().Get("nth_packet"))
 	}
-	
+
 	return rulespecs
 }
 
@@ -68,6 +68,7 @@ func snatGenerate(r *http.Request) []string {
 	return rulespecs
 }
 
+// CheckPosNat
 func CheckPosNat(r *http.Request) ([]string, error) {
 	vars := mux.Vars(r)
 	var linenumber []string
@@ -139,22 +140,22 @@ func CheckPosNat(r *http.Request) ([]string, error) {
 			linenumber = append(linenumber, natsSlice[0])
 		}
 	}
-	
+
 	return linenumber, nil
 }
 
 // PUT /nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func addNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.New()
 	if err != nil {
@@ -205,15 +206,15 @@ func addNat(w http.ResponseWriter, r *http.Request) {
 // DELETE /nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func delNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.New()
 	if err != nil {
@@ -255,15 +256,15 @@ func delNat(w http.ResponseWriter, r *http.Request) {
 // GET /nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00
 func checkNat(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.New()
 	if err != nil {

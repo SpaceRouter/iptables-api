@@ -13,14 +13,14 @@ import (
 // GET /save_v6/
 func saveRulesV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 
 	err = os.MkdirAll("/etc/iptables/", 0755)
 	if err != nil {
@@ -56,15 +56,15 @@ func saveRulesV6(w http.ResponseWriter, r *http.Request) {
 // GET /restore_v6/{file}
 func restoreRulesV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	err = exec.Command("ip6tables-restore", r.URL.Query().Get("file")).Run()
 	if err != nil {
 		http.Error(w, err.Error(), 500)

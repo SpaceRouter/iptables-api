@@ -31,22 +31,26 @@ func relativePath(basedir string, path *string) {
 	}
 }
 
+// Function GetConfig
 func GetConfig() *viper.Viper {
 	return config
 }
 
+// Function GetSecretKey
 func GetSecretKey() string {
 	configs := GetConfig()
 	key := configs.GetString("security.secret_key")
 	return key
 }
 
+// Function GetHost
 func GetHost() string {
 	configs := GetConfig()
 	host := configs.GetString("server.host")
 	return host
 }
 
+// Function GetPort
 func GetPort() string {
 	configs := GetConfig()
 	port := configs.GetString("server.port")

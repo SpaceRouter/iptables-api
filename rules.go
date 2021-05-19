@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/jeremmfr/go-iptables/iptables"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
-	"github.com/gorilla/mux"
-	"github.com/jeremmfr/go-iptables/iptables"
 )
 
 func ruleGenerate(r *http.Request) []string {
@@ -139,15 +139,15 @@ func checkPosRules(r *http.Request) ([]string, error) {
 // PUT /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func addRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {
@@ -177,15 +177,15 @@ func addRules(w http.ResponseWriter, r *http.Request) {
 // DELETE /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func delRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {
@@ -206,15 +206,15 @@ func delRules(w http.ResponseWriter, r *http.Request) {
 // GET /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func checkRules(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	rulespecs := ruleGenerate(r)
 	ipt, err := iptables.New()
 	if err != nil {

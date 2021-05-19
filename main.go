@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/jeremmfr/go-iptables/iptables"
+	"github.com/spacerouter/sr_auth"
+	"iptables-api/config"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"iptables-api/config"
-	"github.com/spacerouter/sr_auth"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/jeremmfr/go-iptables/iptables"
 )
 
 const (
@@ -21,19 +21,19 @@ const (
 	logAct            string            = "LOG"
 	trueStr           string            = "true"
 	tcpStr            string            = "tcp"
-	SYNStr            string            = "SYN"
+	SYNStr            string            = "SYN" //
 	defaultFlagsMask  string            = "FIN,SYN,RST,ACK"
 	defaultFlagsMask2 string            = "SYN,RST,ACK,FIN"
 )
 
 const (
-	iptablesRole	  sr_auth.Role		= "iptables"
+	iptablesRole sr_auth.Role = "iptables"
 )
 
 var (
-	respErr      error
-	savePath     *string
-	auth		 *sr_auth.Auth
+	respErr  error
+	savePath *string
+	auth     *sr_auth.Auth
 )
 
 func main() {
@@ -48,9 +48,9 @@ func main() {
 
 	flag.Parse()
 	config.Init(*environment)
-	tmp_auth := sr_auth.CreateAuth(config.GetSecretKey())
-	auth = &tmp_auth
-	
+	tmpAuth := sr_auth.CreateAuth(config.GetSecretKey())
+	auth = &tmpAuth
+
 	// accesslog file open
 	accessLog, err := os.OpenFile(*accessLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {

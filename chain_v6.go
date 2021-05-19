@@ -2,23 +2,23 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
+	"net/http"
 )
 
 // PUT /chain_v6/{table}/{name}/
 func addChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
@@ -35,15 +35,15 @@ func addChainV6(w http.ResponseWriter, r *http.Request) {
 // DELETE /chain_v6/{table}/{name}/
 func delChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
@@ -68,15 +68,15 @@ func delChainV6(w http.ResponseWriter, r *http.Request) {
 // GET /chain_v6/{table}/{name}/
 func listChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
@@ -96,15 +96,15 @@ func listChainV6(w http.ResponseWriter, r *http.Request) {
 // PUT /mvchain_v6/{table}/{oldname}/{newname}/
 func renameChainV6(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.SrAuthHttp(r)
-    if err != nil {
-        w.WriteHeader(http.StatusUnauthorized)
-        return
-    }
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if !user.HasRole(iptablesRole) {
-        w.WriteHeader(http.StatusForbidden)
-        return
-    }
-	
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
