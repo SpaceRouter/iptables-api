@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/spacerouter/sr_auth"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,24 +15,11 @@ import (
 func (s *SaveStruct) SaveRulesV6(c *gin.Context) {
 	w := c.Writer
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	err = os.MkdirAll("/etc/iptables/", 0755)
+	err := os.MkdirAll("/etc/iptables/", 0755)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -69,24 +55,11 @@ func RestoreRulesV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	err = exec.Command("ip6tables-restore", r.URL.Query().Get("file")).Run()
+	err := exec.Command("ip6tables-restore", r.URL.Query().Get("file")).Run()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

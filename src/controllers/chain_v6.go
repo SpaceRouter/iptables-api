@@ -3,41 +3,24 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
-	"github.com/spacerouter/sr_auth"
 	"net/http"
 )
 
 // AddChainV6 PUT /chain_v6/{table}/{name}/
 func AddChainV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	respErr = ipt.NewChain(vars["table"], vars["name"])
+	respErr = ipt.NewChain(c.Param("table"), c.Param("name"))
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -47,26 +30,11 @@ func AddChainV6(c *gin.Context) {
 // DelChainV6 DELETE /chain_v6/{table}/{name}/
 func DelChainV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -74,13 +42,13 @@ func DelChainV6(c *gin.Context) {
 	}
 
 	// Clear chain before delete
-	respErr = ipt.ClearChain(vars["table"], vars["name"])
+	respErr = ipt.ClearChain(c.Param("table"), c.Param("name"))
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
 	}
 	// Delete chain
-	respErr = ipt.DeleteChain(vars["table"], vars["name"])
+	respErr = ipt.DeleteChain(c.Param("table"), c.Param("name"))
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -90,32 +58,17 @@ func DelChainV6(c *gin.Context) {
 // ListChainV6 GET /chain_v6/{table}/{name}/
 func ListChainV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	respStr, respErr := ipt.List(vars["table"], vars["name"])
+	respStr, respErr := ipt.List(c.Param("table"), c.Param("name"))
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -128,32 +81,17 @@ func ListChainV6(c *gin.Context) {
 // RenameChainV6 PUT /mvchain_v6/{table}/{oldname}/{newname}/
 func RenameChainV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	respErr = ipt.RenameChain(vars["table"], vars["oldname"], vars["newname"])
+	respErr = ipt.RenameChain(c.Param("table"), c.Param("oldname"), c.Param("newname"))
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)

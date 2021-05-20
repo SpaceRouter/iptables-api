@@ -3,17 +3,15 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
-	"github.com/spacerouter/sr_auth"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-func rawGenerateV6(r *http.Request) []string {
-	vars := mux.Vars(r)
+func rawGenerateV6(c *gin.Context) []string {
+	r := c.Request
 	var specEnd []string
 
 	if r.URL.Query().Get("sports") != "" {
@@ -25,34 +23,34 @@ func rawGenerateV6(r *http.Request) []string {
 	if r.URL.Query().Get("notrack") != "" {
 		specEnd = append(specEnd, "--notrack")
 	}
-	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (vars["proto"] == tcpStr) {
+	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
 		tcpflag := []string{"--tcp-flags", r.URL.Query().Get("tcpflag1"), r.URL.Query().Get("tcpflag2")}
 		specEnd = append(specEnd, tcpflag...)
 	}
 	if r.URL.Query().Get("tcpmss") != "" {
 		specEnd = append(specEnd, "-m", "tcpmss", "--mss", r.URL.Query().Get("tcpmss"))
 	}
-	if vars["iface_in"] != "*" {
-		specEnd = append(specEnd, "-i", vars["iface_in"])
+	if c.Param("iface_in") != "*" {
+		specEnd = append(specEnd, "-i", c.Param("iface_in"))
 	}
-	if vars["iface_out"] != "*" {
-		specEnd = append(specEnd, "-o", vars["iface_out"])
+	if c.Param("iface_out") != "*" {
+		specEnd = append(specEnd, "-o", c.Param("iface_out"))
 	}
-	srcRange := strings.Contains(vars["source"], "-")
-	dstRange := strings.Contains(vars["destination"], "-")
-	ruleSpecs := []string{"-p", vars["proto"]}
+	srcRange := strings.Contains(c.Param("source"), "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
+	ruleSpecs := []string{"-p", c.Param("proto")}
 	if srcRange {
-		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--src-range", strings.ReplaceAll(vars["source"], "_128", ""))
+		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--src-range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	} else {
-		ruleSpecs = append(ruleSpecs, "-s", strings.ReplaceAll(vars["source"], "_", "/"))
+		ruleSpecs = append(ruleSpecs, "-s", strings.ReplaceAll(c.Param("source"), "_", "/"))
 	}
 	if dstRange {
-		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	} else {
-		ruleSpecs = append(ruleSpecs, "-d", strings.ReplaceAll(vars["destination"], "_", "/"))
+		ruleSpecs = append(ruleSpecs, "-d", strings.ReplaceAll(c.Param("destination"), "_", "/"))
 	}
-	ruleSpecs = append(ruleSpecs, "-j", vars["action"])
-	if (r.URL.Query().Get("log-prefix") != "") && vars["action"] == logAct {
+	ruleSpecs = append(ruleSpecs, "-j", c.Param("action"))
+	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
 		ruleSpecs = append(ruleSpecs, "--log-prefix", r.URL.Query().Get("log-prefix"))
 	}
 	ruleSpecs = append(ruleSpecs, specEnd...)
@@ -60,41 +58,42 @@ func rawGenerateV6(r *http.Request) []string {
 	return ruleSpecs
 }
 
-func checkPosRawV6(r *http.Request) ([]string, error) {
-	vars := mux.Vars(r)
+func checkPosRawV6(c *gin.Context) ([]string, error) {
+	r := c.Request
+
 	var linenumber []string
 
-	line := []string{vars["action"], vars["proto"]}
-	line = append(line, vars["iface_in"], vars["iface_out"])
+	line := []string{c.Param("action"), c.Param("proto")}
+	line = append(line, c.Param("iface_in"), c.Param("iface_out"))
 
-	srcRange := strings.Contains(vars["source"], "-")
+	srcRange := strings.Contains(c.Param("source"), "-")
 	if srcRange {
 		line = append(line, "::/0")
 	} else {
-		source128 := strings.Contains(vars["source"], "_128")
+		source128 := strings.Contains(c.Param("source"), "_128")
 		if source128 {
-			line = append(line, strings.ReplaceAll(vars["source"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_128", ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["source"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_", "/"))
 		}
 	}
 
-	dstRange := strings.Contains(vars["destination"], "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
 	if dstRange {
 		line = append(line, "::/0")
 	} else {
-		destination128 := strings.Contains(vars["destination"], "_128")
+		destination128 := strings.Contains(c.Param("destination"), "_128")
 		if destination128 {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_128", ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_", "/"))
 		}
 	}
 	if srcRange {
-		line = append(line, "source", "IP", "range", strings.ReplaceAll(vars["source"], "_128", ""))
+		line = append(line, "source", "IP", "range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	}
 	if dstRange {
-		line = append(line, "destination", "IP", "range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		line = append(line, "destination", "IP", "range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	}
 	if r.URL.Query().Get("sports") != "" {
 		line = append(line, "multiport", "sports", r.URL.Query().Get("sports"))
@@ -102,7 +101,7 @@ func checkPosRawV6(r *http.Request) ([]string, error) {
 	if r.URL.Query().Get("dports") != "" {
 		line = append(line, "multiport", "dports", r.URL.Query().Get("dports"))
 	}
-	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (vars["proto"] == tcpStr) {
+	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
 		line = append(line, tcpStr)
 		flags := ""
 		if r.URL.Query().Get("tcpflag1") == SYNStr {
@@ -119,14 +118,14 @@ func checkPosRawV6(r *http.Request) ([]string, error) {
 	if r.URL.Query().Get("tcpmss") != "" {
 		line = append(line, "tcpmss", "match", r.URL.Query().Get("tcpmss"))
 	}
-	if (r.URL.Query().Get("log-prefix") != "") && vars["action"] == logAct {
+	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
 		line = append(line, "LOG", "flags", "0", "level", "4", "prefix", strings.Join([]string{"\"", r.URL.Query().Get("log-prefix"), "\""}, ""))
 	}
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		return nil, err
 	}
-	args := []string{"-t", "raw", "-vnL", vars["chain"], "--line-numbers"}
+	args := []string{"-t", "raw", "-vnL", c.Param("chain"), "--line-numbers"}
 	if ipt.HasWait {
 		args = append(args, "--wait")
 	}
@@ -150,30 +149,16 @@ func AddRawV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	rulespecs := rawGenerateV6(r)
+	rulespecs := rawGenerateV6(c)
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
@@ -183,9 +168,9 @@ func AddRawV6(c *gin.Context) {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		respErr = ipt.Insert("raw", vars["chain"], position, rulespecs...)
+		respErr = ipt.Insert("raw", c.Param("chain"), position, rulespecs...)
 	} else {
-		respErr = ipt.Append("raw", vars["chain"], rulespecs...)
+		respErr = ipt.Append("raw", c.Param("chain"), rulespecs...)
 	}
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -196,36 +181,21 @@ func AddRawV6(c *gin.Context) {
 // DelRawV6 DELTE /raw_v6/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func DelRawV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	rulespecs := rawGenerateV6(r)
+	rulespecs := rawGenerateV6(c)
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	respErr = ipt.Delete("raw", vars["chain"], rulespecs...)
+	respErr = ipt.Delete("raw", c.Param("chain"), rulespecs...)
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -237,20 +207,7 @@ func CheckRawV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
+	if !checkRole(c) {
 		return
 	}
 
@@ -259,7 +216,7 @@ func CheckRawV6(c *gin.Context) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	rulespecs := rawGenerateV6(r)
+	rulespecs := rawGenerateV6(c)
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
@@ -278,7 +235,7 @@ func CheckRawV6(c *gin.Context) {
 				return
 			}
 		}
-		posRaw, err := checkPosRawV6(r)
+		posRaw, err := checkPosRawV6(c)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -297,8 +254,7 @@ func CheckRawV6(c *gin.Context) {
 			return
 		}
 	} else {
-		vars := mux.Vars(r)
-		respStr, respErr := ipt.Exists("raw", vars["chain"], rulespecs...)
+		respStr, respErr := ipt.Exists("raw", c.Param("chain"), rulespecs...)
 		if respErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, respErr)

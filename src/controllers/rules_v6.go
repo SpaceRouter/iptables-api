@@ -3,17 +3,15 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
-	"github.com/spacerouter/sr_auth"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-func ruleGenerateV6(r *http.Request) []string {
-	vars := mux.Vars(r)
+func ruleGenerateV6(c *gin.Context) []string {
+	r := c.Request
 	var specEnd []string
 
 	if r.URL.Query().Get("sports") != "" {
@@ -28,27 +26,27 @@ func ruleGenerateV6(r *http.Request) []string {
 	if r.URL.Query().Get("icmptype") != "" {
 		specEnd = append(specEnd, "--icmpv6-type", r.URL.Query().Get("icmptype"))
 	}
-	if vars["iface_in"] != "*" {
-		specEnd = append(specEnd, "-i", vars["iface_in"])
+	if c.Param("iface_in") != "*" {
+		specEnd = append(specEnd, "-i", c.Param("iface_in"))
 	}
-	if vars["iface_out"] != "*" {
-		specEnd = append(specEnd, "-o", vars["iface_out"])
+	if c.Param("iface_out") != "*" {
+		specEnd = append(specEnd, "-o", c.Param("iface_out"))
 	}
-	srcRange := strings.Contains(vars["source"], "-")
-	dstRange := strings.Contains(vars["destination"], "-")
-	ruleSpecs := []string{"-p", vars["proto"]}
+	srcRange := strings.Contains(c.Param("source"), "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
+	ruleSpecs := []string{"-p", c.Param("proto")}
 	if srcRange {
-		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--src-range", strings.ReplaceAll(vars["source"], "_128", ""))
+		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--src-range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	} else {
-		ruleSpecs = append(ruleSpecs, "-s", strings.ReplaceAll(vars["source"], "_", "/"))
+		ruleSpecs = append(ruleSpecs, "-s", strings.ReplaceAll(c.Param("source"), "_", "/"))
 	}
 	if dstRange {
-		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		ruleSpecs = append(ruleSpecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	} else {
-		ruleSpecs = append(ruleSpecs, "-d", strings.ReplaceAll(vars["destination"], "_", "/"))
+		ruleSpecs = append(ruleSpecs, "-d", strings.ReplaceAll(c.Param("destination"), "_", "/"))
 	}
-	ruleSpecs = append(ruleSpecs, "-j", vars["action"])
-	if (r.URL.Query().Get("log-prefix") != "") && vars["action"] == logAct {
+	ruleSpecs = append(ruleSpecs, "-j", c.Param("action"))
+	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
 		ruleSpecs = append(ruleSpecs, "--log-prefix", r.URL.Query().Get("log-prefix"))
 	}
 	ruleSpecs = append(ruleSpecs, specEnd...)
@@ -56,41 +54,41 @@ func ruleGenerateV6(r *http.Request) []string {
 	return ruleSpecs
 }
 
-func checkPosRulesV6(r *http.Request) ([]string, error) {
-	vars := mux.Vars(r)
+func checkPosRulesV6(c *gin.Context) ([]string, error) {
+	r := c.Request
 	var linenumber []string
 
-	line := []string{vars["action"], vars["proto"]}
-	line = append(line, vars["iface_in"], vars["iface_out"])
+	line := []string{c.Param("action"), c.Param("proto")}
+	line = append(line, c.Param("iface_in"), c.Param("iface_out"))
 
-	srcRange := strings.Contains(vars["source"], "-")
+	srcRange := strings.Contains(c.Param("source"), "-")
 	if srcRange {
 		line = append(line, "::/0")
 	} else {
-		source128 := strings.Contains(vars["source"], "_128")
+		source128 := strings.Contains(c.Param("source"), "_128")
 		if source128 {
-			line = append(line, strings.ReplaceAll(vars["source"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_128", ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["source"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_", "/"))
 		}
 	}
 
-	dstRange := strings.Contains(vars["destination"], "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
 	if dstRange {
 		line = append(line, "::/0")
 	} else {
-		destination128 := strings.Contains(vars["destination"], "_128")
+		destination128 := strings.Contains(c.Param("destination"), "_128")
 		if destination128 {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_128", ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_", "/"))
 		}
 	}
 	if srcRange {
-		line = append(line, "source", "IP", "range", strings.ReplaceAll(vars["source"], "_128", ""))
+		line = append(line, "source", "IP", "range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	}
 	if dstRange {
-		line = append(line, "destination", "IP", "range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		line = append(line, "destination", "IP", "range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	}
 	if r.URL.Query().Get("sports") != "" {
 		line = append(line, "multiport", "sports", r.URL.Query().Get("sports"))
@@ -101,14 +99,14 @@ func checkPosRulesV6(r *http.Request) ([]string, error) {
 	if r.URL.Query().Get("icmptype") != "" {
 		line = append(line, "ipv6-icmptype", r.URL.Query().Get("icmptype"))
 	}
-	if (r.URL.Query().Get("log-prefix") != "") && vars["action"] == logAct {
+	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
 		line = append(line, "LOG", "flags", "0", "level", "4", "prefix", strings.Join([]string{"\"", r.URL.Query().Get("log-prefix"), "\""}, ""))
 	}
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		return nil, err
 	}
-	args := []string{"-t", "filter", "-vnL", vars["chain"], "--line-numbers"}
+	args := []string{"-t", "filter", "-vnL", c.Param("chain"), "--line-numbers"}
 	if ipt.HasWait {
 		args = append(args, "--wait")
 	}
@@ -132,24 +130,11 @@ func AddRulesV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	rulespecs := ruleGenerateV6(r)
+	rulespecs := ruleGenerateV6(c)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -158,16 +143,16 @@ func AddRulesV6(c *gin.Context) {
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	vars := mux.Vars(r)
+
 	if r.URL.Query().Get("position") != "" {
 		position, err := strconv.Atoi(r.URL.Query().Get("position"))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		respErr = ipt.Insert("filter", vars["chain"], position, rulespecs...)
+		respErr = ipt.Insert("filter", c.Param("chain"), position, rulespecs...)
 	} else {
-		respErr = ipt.Append("filter", vars["chain"], rulespecs...)
+		respErr = ipt.Append("filter", c.Param("chain"), rulespecs...)
 	}
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -178,26 +163,12 @@ func AddRulesV6(c *gin.Context) {
 // DelRulesV6 DELETE /rules_v6/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func DelRulesV6(c *gin.Context) {
 	w := c.Writer
-	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	rulespecs := ruleGenerateV6(r)
+	rulespecs := ruleGenerateV6(c)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -206,8 +177,8 @@ func DelRulesV6(c *gin.Context) {
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	vars := mux.Vars(r)
-	respErr = ipt.Delete("filter", vars["chain"], rulespecs...)
+
+	respErr = ipt.Delete("filter", c.Param("chain"), rulespecs...)
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -219,24 +190,11 @@ func CheckRulesV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	rulespecs := ruleGenerateV6(r)
+	rulespecs := ruleGenerateV6(c)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -246,7 +204,7 @@ func CheckRulesV6(c *gin.Context) {
 		rulespecs = append(rulespecs, "--wait")
 	}
 	if r.URL.Query().Get("position") != "" {
-		posRules, err := checkPosRulesV6(r)
+		posRules, err := checkPosRulesV6(c)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -265,8 +223,8 @@ func CheckRulesV6(c *gin.Context) {
 			return
 		}
 	} else {
-		vars := mux.Vars(r)
-		respStr, respErr := ipt.Exists("filter", vars["chain"], rulespecs...)
+
+		respStr, respErr := ipt.Exists("filter", c.Param("chain"), rulespecs...)
 		if respErr != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, respErr)

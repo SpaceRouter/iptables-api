@@ -32,7 +32,7 @@ func NewRouter(savePath string) *gin.Engine {
 	raw := router.Group("raw")
 	{
 		raw.PUT(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.AddRaw)
-		raw.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRules)
+		raw.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRaw)
 		raw.GET(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.CheckRaw)
 	}
 

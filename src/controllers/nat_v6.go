@@ -3,34 +3,32 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 	"github.com/jeremmfr/go-iptables/iptables"
-	"github.com/spacerouter/sr_auth"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-func dnatGenerateV6(r *http.Request) []string {
-	vars := mux.Vars(r)
-	rulespecs := []string{"-p", vars["proto"], "-i", vars["iface"]}
+func dnatGenerateV6(c *gin.Context) []string {
+	r := c.Request
+	rulespecs := []string{"-p", c.Param("proto"), "-i", c.Param("iface")}
 	if r.URL.Query().Get("except") == trueStr {
 		rulespecs = append(rulespecs, "!")
 	}
-	srcRange := strings.Contains(vars["source"], "-")
-	dstRange := strings.Contains(vars["destination"], "-")
+	srcRange := strings.Contains(c.Param("source"), "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
 	if srcRange {
-		rulespecs = append(rulespecs, "-m", "iprange", "--src-range", strings.ReplaceAll(vars["source"], "_128", ""))
+		rulespecs = append(rulespecs, "-m", "iprange", "--src-range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	} else {
-		rulespecs = append(rulespecs, "-s", strings.ReplaceAll(vars["source"], "_", "/"))
+		rulespecs = append(rulespecs, "-s", strings.ReplaceAll(c.Param("source"), "_", "/"))
 	}
 	if dstRange {
-		rulespecs = append(rulespecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		rulespecs = append(rulespecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	} else {
-		rulespecs = append(rulespecs, "-d", strings.ReplaceAll(vars["destination"], "_", "/"))
+		rulespecs = append(rulespecs, "-d", strings.ReplaceAll(c.Param("destination"), "_", "/"))
 	}
-	rulespecs = append(rulespecs, "-j", "DNAT", "--to-destination", vars["nat_final"])
+	rulespecs = append(rulespecs, "-j", "DNAT", "--to-destination", c.Param("nat_final"))
 	if r.URL.Query().Get("dport") != "" {
 		rulespecs = append(rulespecs, "--dport", r.URL.Query().Get("dport"))
 	}
@@ -41,25 +39,26 @@ func dnatGenerateV6(r *http.Request) []string {
 	return rulespecs
 }
 
-func snatGenerateV6(r *http.Request) []string {
-	vars := mux.Vars(r)
-	rulespecs := []string{"-p", vars["proto"], "-o", vars["iface"]}
-	srcRange := strings.Contains(vars["source"], "-")
-	dstRange := strings.Contains(vars["destination"], "-")
+func snatGenerateV6(c *gin.Context) []string {
+	r := c.Request
+
+	rulespecs := []string{"-p", c.Param("proto"), "-o", c.Param("iface")}
+	srcRange := strings.Contains(c.Param("source"), "-")
+	dstRange := strings.Contains(c.Param("destination"), "-")
 	if srcRange {
-		rulespecs = append(rulespecs, "-m", "iprange", "--src-range", strings.ReplaceAll(vars["source"], "_128", ""))
+		rulespecs = append(rulespecs, "-m", "iprange", "--src-range", strings.ReplaceAll(c.Param("source"), "_128", ""))
 	} else {
-		rulespecs = append(rulespecs, "-s", strings.ReplaceAll(vars["source"], "_", "/"))
+		rulespecs = append(rulespecs, "-s", strings.ReplaceAll(c.Param("source"), "_", "/"))
 	}
 	if r.URL.Query().Get("except") == trueStr {
 		rulespecs = append(rulespecs, "!")
 	}
 	if dstRange {
-		rulespecs = append(rulespecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(vars["destination"], "_128", ""))
+		rulespecs = append(rulespecs, "-m", "iprange", "--dst-range", strings.ReplaceAll(c.Param("destination"), "_128", ""))
 	} else {
-		rulespecs = append(rulespecs, "-d", strings.ReplaceAll(vars["destination"], "_", "/"))
+		rulespecs = append(rulespecs, "-d", strings.ReplaceAll(c.Param("destination"), "_", "/"))
 	}
-	rulespecs = append(rulespecs, "-j", "SNAT", "--to-source", vars["nat_final"])
+	rulespecs = append(rulespecs, "-j", "SNAT", "--to-source", c.Param("nat_final"))
 	if r.URL.Query().Get("dport") != "" {
 		rulespecs = append(rulespecs, "--dport", r.URL.Query().Get("dport"))
 	}
@@ -70,44 +69,45 @@ func snatGenerateV6(r *http.Request) []string {
 	return rulespecs
 }
 
-func checkPosNatV6(r *http.Request) ([]string, error) {
-	vars := mux.Vars(r)
+func checkPosNatV6(c *gin.Context) ([]string, error) {
+	r := c.Request
+
 	var linenumber []string
 	var line []string
 
-	if vars["action"] == dnatAct {
-		line = append(line, "DNAT", vars["proto"], vars["iface"], "*")
+	if c.Param("action") == dnatAct {
+		line = append(line, "DNAT", c.Param("proto"), c.Param("iface"), "*")
 	}
-	if vars["action"] == snatAct {
-		line = append(line, "SNAT", vars["proto"], "*", vars["iface"])
+	if c.Param("action") == snatAct {
+		line = append(line, "SNAT", c.Param("proto"), "*", c.Param("iface"))
 	}
-	source128 := strings.Contains(vars["source"], "_128")
-	destination128 := strings.Contains(vars["destination"], "_128")
+	source128 := strings.Contains(c.Param("source"), "_128")
+	destination128 := strings.Contains(c.Param("destination"), "_128")
 
 	if source128 {
-		if (vars["action"] == dnatAct) && (r.URL.Query().Get("except") == trueStr) {
-			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(vars["source"], "_128", "")}, ""))
+		if (c.Param("action") == dnatAct) && (r.URL.Query().Get("except") == trueStr) {
+			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(c.Param("source"), "_128", "")}, ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["source"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_128", ""))
 		}
 	} else {
-		if (vars["action"] == dnatAct) && (r.URL.Query().Get("except") == trueStr) {
-			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(vars["source"], "_", "/")}, ""))
+		if (c.Param("action") == dnatAct) && (r.URL.Query().Get("except") == trueStr) {
+			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(c.Param("source"), "_", "/")}, ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["source"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("source"), "_", "/"))
 		}
 	}
 	if destination128 {
-		if (vars["action"] == snatAct) && (r.URL.Query().Get("except") == trueStr) {
-			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(vars["destination"], "_128", "")}, ""))
+		if (c.Param("action") == snatAct) && (r.URL.Query().Get("except") == trueStr) {
+			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(c.Param("destination"), "_128", "")}, ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_128", ""))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_128", ""))
 		}
 	} else {
-		if (vars["action"] == snatAct) && (r.URL.Query().Get("except") == trueStr) {
-			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(vars["destination"], "_", "/")}, ""))
+		if (c.Param("action") == snatAct) && (r.URL.Query().Get("except") == trueStr) {
+			line = append(line, strings.Join([]string{"!", strings.ReplaceAll(c.Param("destination"), "_", "/")}, ""))
 		} else {
-			line = append(line, strings.ReplaceAll(vars["destination"], "_", "/"))
+			line = append(line, strings.ReplaceAll(c.Param("destination"), "_", "/"))
 		}
 	}
 	if r.URL.Query().Get("dport") != "" {
@@ -120,13 +120,13 @@ func checkPosNatV6(r *http.Request) ([]string, error) {
 			line = append(line, "statistic", "mode", "nth", "every", r.URL.Query().Get("nth_every"), "packet", r.URL.Query().Get("nth_packet"))
 		}
 	}
-	line = append(line, strings.Join([]string{"to:", vars["nat_final"]}, ""))
+	line = append(line, strings.Join([]string{"to:", c.Param("nat_final")}, ""))
 
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		return nil, err
 	}
-	args := []string{"-t", "nat", "-vnL", vars["chain"], "--line-numbers"}
+	args := []string{"-t", "nat", "-vnL", c.Param("chain"), "--line-numbers"}
 	if ipt.HasWait {
 		args = append(args, "--wait")
 	}
@@ -150,24 +150,10 @@ func AddNatV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -186,11 +172,11 @@ func AddNatV6(c *gin.Context) {
 			return
 		}
 	}
-	switch vars["action"] {
+	switch c.Param("action") {
 	case dnatAct:
-		rulespecs = dnatGenerateV6(r)
+		rulespecs = dnatGenerateV6(c)
 	case snatAct:
-		rulespecs = snatGenerateV6(r)
+		rulespecs = snatGenerateV6(c)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -204,9 +190,9 @@ func AddNatV6(c *gin.Context) {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		respErr = ipt.Insert("nat", vars["chain"], position, rulespecs...)
+		respErr = ipt.Insert("nat", c.Param("chain"), position, rulespecs...)
 	} else {
-		respErr = ipt.Append("nat", vars["chain"], rulespecs...)
+		respErr = ipt.Append("nat", c.Param("chain"), rulespecs...)
 	}
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -219,24 +205,10 @@ func DelNatV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -255,11 +227,11 @@ func DelNatV6(c *gin.Context) {
 			return
 		}
 	}
-	switch vars["action"] {
+	switch c.Param("action") {
 	case dnatAct:
-		rulespecs = dnatGenerateV6(r)
+		rulespecs = dnatGenerateV6(c)
 	case snatAct:
-		rulespecs = snatGenerateV6(r)
+		rulespecs = snatGenerateV6(c)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -267,7 +239,7 @@ func DelNatV6(c *gin.Context) {
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	respErr = ipt.Delete("nat", vars["chain"], rulespecs...)
+	respErr = ipt.Delete("nat", c.Param("chain"), rulespecs...)
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
@@ -279,31 +251,17 @@ func CheckNatV6(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	user, err := sr_auth.ExtractUser(c)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !checkRole(c) {
 		return
 	}
 
-	roles, err := user.GetRoles()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if !sr_auth.HasRole(roles, iptablesRole) {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-
-	vars := mux.Vars(r)
 	ipt, err := iptables.NewWithProtocol(v6)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 	if r.URL.Query().Get("position") != "" {
-		posNat, err := checkPosNatV6(r)
+		posNat, err := checkPosNatV6(c)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -335,11 +293,11 @@ func CheckNatV6(c *gin.Context) {
 			return
 		}
 	}
-	switch vars["action"] {
+	switch c.Param("action") {
 	case dnatAct:
-		rulespecs = dnatGenerateV6(r)
+		rulespecs = dnatGenerateV6(c)
 	case snatAct:
-		rulespecs = snatGenerateV6(r)
+		rulespecs = snatGenerateV6(c)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -347,7 +305,7 @@ func CheckNatV6(c *gin.Context) {
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	respStr, respErr := ipt.Exists("nat", vars["chain"], rulespecs...)
+	respStr, respErr := ipt.Exists("nat", c.Param("chain"), rulespecs...)
 	if respErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
