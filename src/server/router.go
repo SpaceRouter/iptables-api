@@ -85,6 +85,9 @@ func NewRouter(savePath string) *gin.Engine {
 	router.GET("save_v6", s.SaveRulesV6)
 	router.GET("restore_v6", controllers.RestoreRulesV6)
 
+	router.GET("save", s.SaveRules)
+	router.GET("restore", controllers.RestoreRules)
+
 	return router
 
 }
