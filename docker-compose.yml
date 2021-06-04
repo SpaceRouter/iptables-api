@@ -1,0 +1,11 @@
+version: '3'
+services:
+  iptables-api:
+    build: .
+    container_name: iptables-api
+    image: iptables-api
+    ports:
+      - "8081:8081"
+    volumes:
+      - "/var/backups/iptables-api/:/var/backups/iptables-api/"
+    restart: always

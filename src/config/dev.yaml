@@ -1,6 +1,6 @@
 server:
   host: 127.0.0.1
-  port: 8082
+  port: 8081
 security:
   secret_key: JESUISHYPERFANDESEXE
-  auth_server: http://127.0.0.1:8080
+  auth_server: http://192.168.1.1:8085
