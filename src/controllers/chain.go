@@ -32,33 +32,7 @@ func AddChain(c *gin.Context) {
 
 // DelChain DELETE /chain/{table}/{name}/
 func DelChain(c *gin.Context) {
-	w := c.Writer
 
-	if !checkRole(c) {
-		return
-	}
-
-	ipt, err := iptables.New()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	// Clear chain before delete
-	respErr = ipt.ClearChain(c.Param("table"), c.Param("name"))
-	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
-	}
-	// Delete chain
-	respErr = ipt.DeleteChain(c.Param("table"), c.Param("name"))
-	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
-	}
-}
-
-// ListChain GET /chain/{table}/{name}/
-func ListChain(c *gin.Context) {
 	if !checkRole(c) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
 			Ok:      false,
@@ -75,9 +49,51 @@ func ListChain(c *gin.Context) {
 		})
 		return
 	}
+	// Clear chain before delete
+	err = ipt.ClearChain(c.Param("table"), c.Param("name"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	// Delete chain
+	err = ipt.DeleteChain(c.Param("table"), c.Param("name"))
+	if respErr != nil {
+		c.JSON(http.StatusInternalServerError, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, forms.ChainListResponse{
+		Ok:      true,
+		Message: "",
+	})
+}
+
+// ListChain GET /chain/{table}/{name}/
+func ListChain(c *gin.Context) {
+	if !checkRole(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.ChainListResponse{
+			Ok:      false,
+			Message: "",
+		})
+		return
+	}
+
+	ipt, err := iptables.New()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
 	respStr, err := ipt.List(c.Param("table"), c.Param("name"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
