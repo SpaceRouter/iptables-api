@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
+	"iptables-api/forms"
+	"iptables-api/models"
 	"net/http"
 	"strings"
 )
@@ -55,53 +57,58 @@ func DelChain(c *gin.Context) {
 	}
 }
 
-type Rule struct {
-	Mproto string
-	Pproto string
-	Dport string
-	Dest string
-}
-
 // ListChain GET /chain/{table}/{name}/
 func ListChain(c *gin.Context) {
-	w := c.Writer
-
 	if !checkRole(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
-	respStr, respErr := ipt.List(c.Param("table"), c.Param("name"))
-	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+	respStr, err := ipt.List(c.Param("table"), c.Param("name"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
 	}
 
-	rules := stringToRules(respStr)
-	data := map[string]interface{}{"Ok": true, "Rules": rules}
-	c.JSON(http.StatusOK, &data)
+	chains := stringToChains(respStr)
+
+	c.JSON(http.StatusOK, forms.ChainListResponse{
+		Ok:      true,
+		Message: "",
+		Chains:  chains,
+	})
 }
 
-func stringToRules(respStr []string) []Rule{
-	var grosSexe []Rule
+func stringToChains(respStr []string) []models.Chain {
+	var chains []models.Chain
 	for _, str := range respStr {
 		splitted := strings.Split(str, " ")
 		if len(splitted) > 3 && splitted[2] == "-p" {
-			rule := Rule{
-				Mproto: splitted[3],
-				Pproto: splitted[5],
-				Dport: splitted[7],
-				Dest: splitted[11],
+			rule := models.Chain{
+				Match:           splitted[3],
+				Protocol:        splitted[5],
+				DestinationPort: splitted[7],
+				Destination:     splitted[11],
 			}
-			grosSexe = append(grosSexe, rule)
+			chains = append(chains, rule)
 		}
 	}
 
-	return grosSexe
+	return chains
 }
 
 // RenameChain PUT /mvchain/{table}/{oldname}/{newname}/
