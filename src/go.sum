@@ -83,10 +83,6 @@ github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGaHF6qqu48+N2wcFQ5qg5FXgOdqsJ5d8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
-github.com/gorilla/handlers v1.4.0 h1:XulKRWSQK5uChr4pEgSE4Tc/OcmnU9GJuSwdog/tZsA=
-github.com/gorilla/handlers v1.4.0/go.mod h1:Qkdc/uu4tH4g6mTK6auzZ766c4CA0Ng8+o/OAirnOIQ=
-github.com/gorilla/mux v1.7.2 h1:zoNxOV7WjqXptQOVngLmcSQgXmgk4NMz1HibBchjl/I=
-github.com/gorilla/mux v1.7.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
@@ -184,12 +180,8 @@ github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1
 github.com/smartystreets/goconvey v1.6.4 h1:fv0U8FUIMPNf1L9lnHLvLhgicrIVChEkdzIKYqbNC9s=
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
-github.com/spacerouter/sr_auth v0.0.5 h1:3uRqEwFCABMzJAnYplNyoQ2D+UfZauyyb7d+2M7sdVs=
-github.com/spacerouter/sr_auth v0.0.5/go.mod h1:ejD+oM94u1cYfkOUewnODvjuUxq+dHELXcB7V4T8IFI=
-github.com/spacerouter/sr_auth v0.0.7 h1:H+ni4r62D/Q+qE6EWJ5XIG/5RFfqXAtFtdjro7FZEWY=
-github.com/spacerouter/sr_auth v0.0.7/go.mod h1:ejD+oM94u1cYfkOUewnODvjuUxq+dHELXcB7V4T8IFI=
-github.com/spacerouter/sr_auth v0.0.8 h1:oloK5d2h/+wERukKQQXSu2Ix+cJYBYKSYx4Qwdd3YlM=
-github.com/spacerouter/sr_auth v0.0.8/go.mod h1:ejD+oM94u1cYfkOUewnODvjuUxq+dHELXcB7V4T8IFI=
+github.com/spacerouter/sr_auth v0.0.9 h1:7agSeFzXP1N+sGG6TJKJrJbOLuz9Mr5hDy3TBnF5ysk=
+github.com/spacerouter/sr_auth v0.0.9/go.mod h1:ejD+oM94u1cYfkOUewnODvjuUxq+dHELXcB7V4T8IFI=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/afero v1.1.2 h1:m8/z1t7/fwjysjQRYbP0RD+bUIF/8tJwPdEZsI83ACI=
 github.com/spf13/afero v1.1.2/go.mod h1:j4pytiNVoe2o6bmDsKpLACNPDBIoEAkihy7loJ1B0CQ=

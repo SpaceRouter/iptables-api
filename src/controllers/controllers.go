@@ -41,13 +41,13 @@ func checkRole(c *gin.Context) bool {
 		return false
 	}
 
-	roles, err := user.GetRoles()
+	role, err := user.GetRoles()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return false
 	}
 
-	if !sr_auth.HasRole(roles, iptablesRole) {
+	if *role == iptablesRole {
 		http.Error(w, "", http.StatusForbidden)
 		return false
 	}
