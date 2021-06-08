@@ -72,16 +72,52 @@ Test,Add,Del iptables rule in table raw with the parameters
 
 **Chain:**
 
-Test,Add,Del chain with the parameters
+SHOW a chain content:
 
-	GET/PUT/DELETE /chain/{table}/{name}/
-	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/chain/{table}/{name}/
+	const response = await fetch("http://127.0.0.1:8080/chain/{table}/{name}/", {
+		method: "GET"
+		headers: { "Authorization": "bearer token" }
+		});
 
-Rename chain with the parameters
+	curl -H 'Authorization: bearer token' -i -X GET http://127.0.0.1:8080/chain/{table}/{name}/
 
-	PUT /mvchain/{table}/{oldname}/{newname}/
+Return example:
+
+	{
+    	"Ok": true,
+    	"Rules": [
+        	{
+            	"Mproto": "tcp",
+            	"Pproto": "tcp",
+            	"Dport": "3389",
+            	"Dest": "192.168.1.60:3389"
+        	},
+        	{
+            	"Mproto": "udp",
+            	"Pproto": "udp",
+            	"Dport": "32323",
+            	"Dest": "193.23.23.24:9988"
+        	}
+    	]
+	}
+
+DELETE a chain:
+
+	const response = await fetch("http://127.0.0.1:8080/chain/{table}/{name}/", {
+		method: "DELETE"
+		headers: { "Authorization": "bearer token" }
+		});
+
+	curl -H 'Authorization: bearer token' -i -X DELETE http://127.0.0.1:8080/chain/{table}/{name}/
+
+RENAME a chain:
+
+	const response = await fetch("http://127.0.0.1:8080/mvchain/{table}/{oldname}/{newname}/", {
+		method: "PUT"
+		headers: { "Authorization": "bearer token" }
+		});
+
 	curl -H 'Authorization: bearer token' -i -X PUT http://127.0.0.1:8080/mvchain/{table}/{oldname}/{newname}/
-
 
 **Save & Restore:**
 

@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
 	"net/http"
+	"strings"
 )
 
 // AddChain PUT /chain/{table}/{name}/
@@ -54,6 +55,13 @@ func DelChain(c *gin.Context) {
 	}
 }
 
+type Rule struct {
+	Mproto string
+	Pproto string
+	Dport string
+	Dest string
+}
+
 // ListChain GET /chain/{table}/{name}/
 func ListChain(c *gin.Context) {
 	w := c.Writer
@@ -72,9 +80,28 @@ func ListChain(c *gin.Context) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, respErr)
 	}
-	for i := 0; i < len(respStr); i++ {
-		fmt.Fprintln(w, respStr[i])
+
+	rules := stringToRules(respStr)
+	data := map[string]interface{}{"Ok": true, "Rules": rules}
+	c.JSON(http.StatusOK, &data)
+}
+
+func stringToRules(respStr []string) []Rule{
+	var grosSexe []Rule
+	for _, str := range respStr {
+		splitted := strings.Split(str, " ")
+		if len(splitted) > 3 && splitted[2] == "-p" {
+			rule := Rule{
+				Mproto: splitted[3],
+				Pproto: splitted[5],
+				Dport: splitted[7],
+				Dest: splitted[11],
+			}
+			grosSexe = append(grosSexe, rule)
+		}
 	}
+
+	return grosSexe
 }
 
 // RenameChain PUT /mvchain/{table}/{oldname}/{newname}/
