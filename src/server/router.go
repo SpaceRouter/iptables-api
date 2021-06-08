@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	cors "github.com/itsjamie/gin-cors"
 	"github.com/spacerouter/sr_auth"
 	"iptables-api/config"
 	"iptables-api/controllers"
@@ -19,6 +20,14 @@ func NewRouter(savePath string) *gin.Engine {
 		log.Fatal(err)
 	}
 	router.Use(auth.SrAuthMiddlewareGin())
+	router.Use(cors.Middleware(cors.Config{
+		Origins:         "*",
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type",
+		ExposedHeaders:  "",
+		Credentials:     true,
+		ValidateHeaders: false,
+	}))
 
 	s := controllers.SaveStruct{SavePath: savePath}
 
