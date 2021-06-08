@@ -1,5 +1,5 @@
 # iptables-api
-[![Go Report Card](https://goreportcard.com/badge/github.com/jeremmfr/iptables-api)](https://goreportcard.com/report/github.com/SpaceRouter/iptables-api)
+[![Go Report Card](https://goreportcard.com/badge/github.com/SpaceRouter/iptables-api)](https://goreportcard.com/report/github.com/SpaceRouter/iptables-api)
 
 GO REST API for iptables using jwt authentication
 
@@ -10,65 +10,10 @@ go build -o iptables-api
 
 Run:
 ----
-    ./iptables-api -h
-	Usage of iptables-api:
-	  -e envfile
-		file containing server and security parameters 
-	  -cert string
-	        file of certificat for https
-	  -https
-	        https = true or false
-	  -ip string
-	        listen on IP (default "127.0.0.1")
-	  -port string
-	        listen on port (default "8080")
-	  -key string
-	        file of key for https
-	  -log string
-	        file for access log (default "/var/log/iptables-api.access.log")
-	  -save_path string
-		path for backups => /save (default "/var/backups/iptables-api/")
-
-    ./iptables-api -https -ip=XXX.XXX.XXX.XXX -port=XXX -log=/path/to/access.log -cert=cert.pem -key=key.pem
-    ./iptables-api -ip=XXX.XXX.XXX.XXX -port=XXX -log=/path/to/access.log
+    ./iptables-api OR go run .
 
 API List :
 ---------
-
-**Rules:**
-
-Test,Add,Del iptables rule in table filter with the parameters
-
-	GET/PUT/DELETE /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&state=XXXX&fragment=true&icmptype=XXXX&log-prefix=XXXXX
-
-	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&state=XXXX&fragment=true&icmptype=XXXX&log-prefix=XXXXX
-
-	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
-	log-prefix only if action = LOG
-
-
-**Nat:**
-
-Test,Add,Del iptables rule in table nat with the parameters
-
-	GET/PUT/DELETE /nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00&except=true
-
-	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00&except=true
-
-	with for source and destination _ instead / : 10.0.0.0_8
-
-
-**Raw:**
-
-Test,Add,Del iptables rule in table raw with the parameters
-
-	GET/PUT/DELETE /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true&log-prefix=XXXXX
-
-	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true&log-prefix=XXXXX
-
-	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
-	log-prefix only if action = LOG
-
 
 **Chain:**
 
@@ -118,6 +63,42 @@ RENAME a chain:
 		});
 
 	curl -H 'Authorization: bearer token' -i -X PUT http://127.0.0.1:8080/mvchain/{table}/{oldname}/{newname}/
+
+
+**Rules:**
+
+Test,Add,Del iptables rule in table filter with the parameters
+
+	GET/PUT/DELETE /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&state=XXXX&fragment=true&icmptype=XXXX&log-prefix=XXXXX
+
+	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&state=XXXX&fragment=true&icmptype=XXXX&log-prefix=XXXXX
+
+	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
+	log-prefix only if action = LOG
+
+
+**Nat:**
+
+Test,Add,Del iptables rule in table nat with the parameters
+
+	GET/PUT/DELETE /nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00&except=true
+
+	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/nat/{action}/{chain}/{proto}/{iface}/{source}/{destination}/{nat_final}/?dport=00&except=true
+
+	with for source and destination _ instead / : 10.0.0.0_8
+
+
+**Raw:**
+
+Test,Add,Del iptables rule in table raw with the parameters
+
+	GET/PUT/DELETE /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true&log-prefix=XXXXX
+
+	curl -H 'Authorization: bearer token' -i -X GET/PUT/DELETE http://127.0.0.1:8080/raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true&log-prefix=XXXXX
+
+	with for source and destination _ instead / : 10.0.0.0_8 or range 10.0.0.0-10.255.0.0_32
+	log-prefix only if action = LOG
+
 
 **Save & Restore:**
 
