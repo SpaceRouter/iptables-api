@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
 	"iptables-api/forms"
@@ -12,22 +11,35 @@ import (
 
 // AddChain PUT /chain/{table}/{name}/
 func AddChain(c *gin.Context) {
-	w := c.Writer
-
 	if !checkRole(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
-	respErr = ipt.NewChain(c.Param("table"), c.Param("name"))
-	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+	err = ipt.NewChain(c.Param("table"), c.Param("name"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
 	}
+
+	c.JSON(http.StatusOK, forms.ChainListResponse{
+		Ok:      true,
+		Message: "",
+	})
 }
 
 // DelChain DELETE /chain/{table}/{name}/
@@ -60,11 +72,12 @@ func DelChain(c *gin.Context) {
 	}
 	// Delete chain
 	err = ipt.DeleteChain(c.Param("table"), c.Param("name"))
-	if respErr != nil {
-		c.JSON(http.StatusInternalServerError, forms.ChainListResponse{
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, forms.ChainListResponse{
@@ -93,7 +106,7 @@ func ListChain(c *gin.Context) {
 	}
 	respStr, err := ipt.List(c.Param("table"), c.Param("name"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
@@ -129,20 +142,33 @@ func stringToChains(respStr []string) []models.Chain {
 
 // RenameChain PUT /mvchain/{table}/{oldname}/{newname}/
 func RenameChain(c *gin.Context) {
-	w := c.Writer
-
 	if !checkRole(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.ChainListResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
-	respErr = ipt.RenameChain(c.Param("table"), c.Param("oldname"), c.Param("newname"))
-	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+	err = ipt.RenameChain(c.Param("table"), c.Param("oldname"), c.Param("newname"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
 	}
+
+	c.JSON(http.StatusOK, forms.ChainListResponse{
+		Ok:      true,
+		Message: "",
+	})
 }
