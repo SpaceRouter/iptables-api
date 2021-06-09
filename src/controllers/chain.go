@@ -11,7 +11,15 @@ import (
 
 // AddChain PUT /chain/{table}/{name}/
 func AddChain(c *gin.Context) {
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
 			Ok:      false,
 			Message: "",
@@ -29,14 +37,14 @@ func AddChain(c *gin.Context) {
 	}
 	err = ipt.NewChain(c.Param("table"), c.Param("name"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, forms.ChainListResponse{
+	c.JSON(http.StatusOK, forms.BasicResponse{
 		Ok:      true,
 		Message: "",
 	})
@@ -44,8 +52,15 @@ func AddChain(c *gin.Context) {
 
 // DelChain DELETE /chain/{table}/{name}/
 func DelChain(c *gin.Context) {
-
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
 			Ok:      false,
 			Message: "",
@@ -73,14 +88,14 @@ func DelChain(c *gin.Context) {
 	// Delete chain
 	err = ipt.DeleteChain(c.Param("table"), c.Param("name"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, forms.ChainListResponse{
+	c.JSON(http.StatusOK, forms.BasicResponse{
 		Ok:      true,
 		Message: "",
 	})
@@ -88,7 +103,15 @@ func DelChain(c *gin.Context) {
 
 // ListChain GET /chain/{table}/{name}/
 func ListChain(c *gin.Context) {
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.ChainListResponse{
 			Ok:      false,
 			Message: "",
@@ -142,8 +165,16 @@ func stringToChains(respStr []string) []models.Chain {
 
 // RenameChain PUT /mvchain/{table}/{oldname}/{newname}/
 func RenameChain(c *gin.Context) {
-	if !checkRole(c) {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.ChainListResponse{
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
 			Ok:      false,
 			Message: "",
 		})
@@ -152,7 +183,7 @@ func RenameChain(c *gin.Context) {
 
 	ipt, err := iptables.New()
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.ChainListResponse{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
@@ -160,14 +191,14 @@ func RenameChain(c *gin.Context) {
 	}
 	err = ipt.RenameChain(c.Param("table"), c.Param("oldname"), c.Param("newname"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, forms.ChainListResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
 			Ok:      false,
 			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, forms.ChainListResponse{
+	c.JSON(http.StatusOK, forms.BasicResponse{
 		Ok:      true,
 		Message: "",
 	})

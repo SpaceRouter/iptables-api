@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
 	"github.com/spacerouter/sr_auth"
-	"net/http"
 )
 
 var (
@@ -32,25 +31,21 @@ type SaveStruct struct {
 	SavePath string
 }
 
-func checkRole(c *gin.Context) bool {
-	w := c.Writer
-
+func checkRole(c *gin.Context) (bool, error) {
 	user, err := sr_auth.ExtractUser(c)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return false
+		return false, err
 	}
 
 	role, err := user.GetRoles()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return false
+		return false, err
 	}
 
 	if *role == iptablesRole {
-		http.Error(w, "", http.StatusForbidden)
-		return false
+		return false, nil
+
 	}
 
-	return true
+	return true, nil
 }
