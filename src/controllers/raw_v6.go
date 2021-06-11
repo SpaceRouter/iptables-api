@@ -1,5 +1,6 @@
 package controllers
 
+/*
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -266,3 +267,4 @@ func CheckRawV6(c *gin.Context) {
 		}
 	}
 }
+*/

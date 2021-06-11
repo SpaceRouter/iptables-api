@@ -1,5 +1,6 @@
 package controllers
 
+/*
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -314,3 +315,4 @@ func CheckNatV6(c *gin.Context) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
+*/

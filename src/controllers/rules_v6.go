@@ -1,15 +1,6 @@
 package controllers
 
-import (
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jeremmfr/go-iptables/iptables"
-	"net/http"
-	"reflect"
-	"strconv"
-	"strings"
-)
-
+/*
 func ruleGenerateV6(c *gin.Context) []string {
 	r := c.Request
 	var specEnd []string
@@ -236,3 +227,4 @@ func CheckRulesV6(c *gin.Context) {
 		}
 	}
 }
+*/

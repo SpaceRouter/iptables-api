@@ -61,39 +61,40 @@ func NewRouter(savePath string) *gin.Engine {
 
 	router.PUT("mvchain/:table/:oldname/:newname/", controllers.RenameChain)
 
-	rulesV6 := router.Group("rules_v6")
-	{
-		rulesV6.PUT(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.AddRulesV6)
-		rulesV6.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRulesV6)
-		rulesV6.GET(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.CheckRulesV6)
-	}
+	/*
+		rulesV6 := router.Group("rules_v6")
+		{
+			rulesV6.PUT(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.AddRulesV6)
+			rulesV6.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRulesV6)
+			rulesV6.GET(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.CheckRulesV6)
+		}
 
-	rawV6 := router.Group("raw_v6")
-	{
-		rawV6.PUT(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.AddRawV6)
-		rawV6.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRawV6)
-		rawV6.GET(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.CheckRawV6)
-	}
+		rawV6 := router.Group("raw_v6")
+		{
+			rawV6.PUT(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.AddRawV6)
+			rawV6.DELETE(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.DelRawV6)
+			rawV6.GET(":action/:chain/:proto/:iface_in/:iface_out/:source/:destination/", controllers.CheckRawV6)
+		}
 
-	natV6 := router.Group("nat_v6")
-	{
-		natV6.PUT(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.AddNatV6)
-		natV6.DELETE(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.DelNatV6)
-		natV6.GET(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.CheckNatV6)
-	}
+		natV6 := router.Group("nat_v6")
+		{
+			natV6.PUT(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.AddNatV6)
+			natV6.DELETE(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.DelNatV6)
+			natV6.GET(":action/:chain/:proto/:iface/:source/:destination/:nat_final/", controllers.CheckNatV6)
+		}
 
-	chainV6 := router.Group("chain_v6")
-	{
-		chainV6.PUT(":table/:name/", controllers.AddChainV6)
-		chainV6.DELETE(":table/:name/", controllers.DelChainV6)
-		chainV6.GET(":table/:name/", controllers.ListChainV6)
-	}
+		chainV6 := router.Group("chain_v6")
+		{
+			chainV6.PUT(":table/:name/", controllers.AddChainV6)
+			chainV6.DELETE(":table/:name/", controllers.DelChainV6)
+			chainV6.GET(":table/:name/", controllers.ListChainV6)
+		}
 
-	router.PUT("mvchain_v6/:table/:oldname/:newname/", controllers.RenameChainV6)
+		router.PUT("mvchain_v6/:table/:oldname/:newname/", controllers.RenameChainV6)
 
-	router.GET("save_v6", s.SaveRulesV6)
-	router.GET("restore_v6", controllers.RestoreRulesV6)
-
+		router.GET("save_v6", s.SaveRulesV6)
+		router.GET("restore_v6", controllers.RestoreRulesV6)
+	*/
 	router.GET("save", s.SaveRules)
 	router.GET("restore", controllers.RestoreRules)
 

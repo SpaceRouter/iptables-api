@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
+	"iptables-api/forms"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -143,7 +144,19 @@ func AddRules(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
@@ -177,7 +190,19 @@ func AddRules(c *gin.Context) {
 func DelRules(c *gin.Context) {
 	w := c.Writer
 
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
@@ -202,7 +227,19 @@ func CheckRules(c *gin.Context) {
 	w := c.Writer
 	r := c.Request
 
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 

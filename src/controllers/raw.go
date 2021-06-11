@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
+	"iptables-api/forms"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -11,25 +12,23 @@ import (
 )
 
 func rawGenerate(c *gin.Context) []string {
-	r := c.Request
-
 	var specEnd []string
 
-	if r.URL.Query().Get("sports") != "" {
-		specEnd = append(specEnd, "-m", "multiport", "--sports", r.URL.Query().Get("sports"))
+	if c.Query("sports") != "" {
+		specEnd = append(specEnd, "-m", "multiport", "--sports", c.Query("sports"))
 	}
-	if r.URL.Query().Get("dports") != "" {
-		specEnd = append(specEnd, "-m", "multiport", "--dports", r.URL.Query().Get("dports"))
+	if c.Query("dports") != "" {
+		specEnd = append(specEnd, "-m", "multiport", "--dports", c.Query("dports"))
 	}
-	if r.URL.Query().Get("notrack") != "" {
+	if c.Query("notrack") != "" {
 		specEnd = append(specEnd, "--notrack")
 	}
-	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
-		tcpflag := []string{"--tcp-flags", r.URL.Query().Get("tcpflag1"), r.URL.Query().Get("tcpflag2")}
+	if (c.Query("tcpflag1") != "") && (c.Query("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
+		tcpflag := []string{"--tcp-flags", c.Query("tcpflag1"), c.Query("tcpflag2")}
 		specEnd = append(specEnd, tcpflag...)
 	}
-	if r.URL.Query().Get("tcpmss") != "" {
-		specEnd = append(specEnd, "-m", "tcpmss", "--mss", r.URL.Query().Get("tcpmss"))
+	if c.Query("tcpmss") != "" {
+		specEnd = append(specEnd, "-m", "tcpmss", "--mss", c.Query("tcpmss"))
 	}
 	if c.Param("iface_in") != "*" {
 		specEnd = append(specEnd, "-i", c.Param("iface_in"))
@@ -51,8 +50,8 @@ func rawGenerate(c *gin.Context) []string {
 		ruleSpecs = append(ruleSpecs, "-d", strings.ReplaceAll(c.Param("destination"), "_", "/"))
 	}
 	ruleSpecs = append(ruleSpecs, "-j", c.Param("action"))
-	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
-		ruleSpecs = append(ruleSpecs, "--log-prefix", r.URL.Query().Get("log-prefix"))
+	if (c.Query("log-prefix") != "") && c.Param("action") == logAct {
+		ruleSpecs = append(ruleSpecs, "--log-prefix", c.Query("log-prefix"))
 	}
 	ruleSpecs = append(ruleSpecs, specEnd...)
 
@@ -60,8 +59,6 @@ func rawGenerate(c *gin.Context) []string {
 }
 
 func checkPosRaw(c *gin.Context) ([]string, error) {
-	r := c.Request
-
 	var linenumber []string
 
 	line := []string{c.Param("action"), c.Param("proto"), "--"}
@@ -96,31 +93,31 @@ func checkPosRaw(c *gin.Context) ([]string, error) {
 	if dstRange {
 		line = append(line, "destination", "IP", "range", strings.ReplaceAll(c.Param("destination"), "_32", ""))
 	}
-	if r.URL.Query().Get("sports") != "" {
-		line = append(line, "multiport", "sports", r.URL.Query().Get("sports"))
+	if c.Query("sports") != "" {
+		line = append(line, "multiport", "sports", c.Query("sports"))
 	}
-	if r.URL.Query().Get("dports") != "" {
-		line = append(line, "multiport", "dports", r.URL.Query().Get("dports"))
+	if c.Query("dports") != "" {
+		line = append(line, "multiport", "dports", c.Query("dports"))
 	}
-	if (r.URL.Query().Get("tcpflag1") != "") && (r.URL.Query().Get("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
+	if (c.Query("tcpflag1") != "") && (c.Query("tcpflag2") != "") && (c.Param("proto") == tcpStr) {
 		line = append(line, tcpStr)
 		flags := ""
-		if r.URL.Query().Get("tcpflag1") == SYNStr {
+		if c.Query("tcpflag1") == SYNStr {
 			flags = "flags:0x02/"
 		}
-		if (r.URL.Query().Get("tcpflag1") == defaultFlagsMask) || (r.URL.Query().Get("tcpflag1") == defaultFlagsMask2) {
+		if (c.Query("tcpflag1") == defaultFlagsMask) || (c.Query("tcpflag1") == defaultFlagsMask2) {
 			flags = "flags:0x17/"
 		}
-		if r.URL.Query().Get("tcpflag2") == SYNStr {
+		if c.Query("tcpflag2") == SYNStr {
 			flags = strings.Join([]string{flags, "0x02"}, "")
 		}
 		line = append(line, flags)
 	}
-	if r.URL.Query().Get("tcpmss") != "" {
-		line = append(line, "tcpmss", "match", r.URL.Query().Get("tcpmss"))
+	if c.Query("tcpmss") != "" {
+		line = append(line, "tcpmss", "match", c.Query("tcpmss"))
 	}
-	if (r.URL.Query().Get("log-prefix") != "") && c.Param("action") == logAct {
-		line = append(line, "LOG", "flags", "0", "level", "4", "prefix", strings.Join([]string{"\"", r.URL.Query().Get("log-prefix"), "\""}, ""))
+	if (c.Query("log-prefix") != "") && c.Param("action") == logAct {
+		line = append(line, "LOG", "flags", "0", "level", "4", "prefix", strings.Join([]string{"\"", c.Query("log-prefix"), "\""}, ""))
 	}
 	ipt, err := iptables.New()
 	if err != nil {
@@ -147,26 +144,41 @@ func checkPosRaw(c *gin.Context) ([]string, error) {
 
 // AddRaw PUT /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func AddRaw(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	rulespecs := rawGenerate(c)
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	if r.URL.Query().Get("position") != "" {
-		position, err := strconv.Atoi(r.URL.Query().Get("position"))
+	if c.Query("position") != "" {
+		position, err := strconv.Atoi(c.Query("position"))
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+				Ok:      false,
+				Message: err.Error(),
+			})
 			return
 		}
 		respErr = ipt.Insert("raw", c.Param("chain"), position, rulespecs...)
@@ -174,22 +186,39 @@ func AddRaw(c *gin.Context) {
 		respErr = ipt.Append("raw", c.Param("chain"), rulespecs...)
 	}
 	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+			Ok:      false,
+			Message: respErr.Error(),
+		})
+		return
 	}
 }
 
 // DelRaw DELETE /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func DelRaw(c *gin.Context) {
-	w := c.Writer
 
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	rulespecs := rawGenerate(c)
@@ -198,71 +227,107 @@ func DelRaw(c *gin.Context) {
 	}
 	respErr = ipt.Delete("raw", c.Param("chain"), rulespecs...)
 	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+			Ok:      false,
+			Message: respErr.Error(),
+		})
+		return
 	}
 }
 
 // CheckRaw GET /raw/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00&tcpflag1=XYZ&tcpflag2=Y&notrack=true
 func CheckRaw(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-
-	if !checkRole(c) {
+	ok, err := checkRole(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
+			Ok:      false,
+			Message: "",
+		})
 		return
 	}
 
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	rulespecs := rawGenerate(c)
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	if r.URL.Query().Get("position") != "" {
-		if r.URL.Query().Get("tcpflag1") != "" {
-			if (r.URL.Query().Get("tcpflag1") != defaultFlagsMask) && (r.URL.Query().Get("tcpflag1") != SYNStr) && (r.URL.Query().Get("tcpflag1") != defaultFlagsMask2) {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "tcpflag", r.URL.Query().Get("tcpflag1"), "and position not compatible")
+	if c.Query("position") != "" {
+		if c.Query("tcpflag1") != "" {
+			if (c.Query("tcpflag1") != defaultFlagsMask) && (c.Query("tcpflag1") != SYNStr) && (c.Query("tcpflag1") != defaultFlagsMask2) {
+				c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+					Ok:      false,
+					Message: fmt.Sprint("tcpflag", c.Query("tcpflag1"), "and position not compatible"),
+				})
 				return
 			}
 		}
-		if r.URL.Query().Get("tcpflag2") != "" {
-			if r.URL.Query().Get("tcpflag2") != SYNStr {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintln(w, "tcpflag", r.URL.Query().Get("tcpflag2"), "and position not compatible")
+		if c.Query("tcpflag2") != "" {
+			if c.Query("tcpflag2") != SYNStr {
+				c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+					Ok:      false,
+					Message: fmt.Sprint("tcpflag", c.Query("tcpflag2"), "and position not compatible"),
+				})
 				return
 			}
 		}
 		posRaw, err := checkPosRaw(c)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+				Ok:      false,
+				Message: err.Error(),
+			})
 			return
 		}
 		switch {
 		case len(posRaw) == 0:
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, forms.BasicResponse{
+				Ok:      false,
+				Message: "NotFound",
+			})
 			return
 		case len(posRaw) != 1:
-			w.WriteHeader(http.StatusConflict)
+			c.AbortWithStatusJSON(http.StatusConflict, forms.BasicResponse{
+				Ok:      false,
+				Message: "Conflict",
+			})
 			return
-		case posRaw[0] == r.URL.Query().Get("position"):
+		case posRaw[0] == c.Query("position"):
 			return
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, forms.BasicResponse{
+				Ok:      false,
+				Message: "NotFound",
+			})
 			return
 		}
 	} else {
 		respStr, respErr := ipt.Exists("raw", c.Param("chain"), rulespecs...)
 		if respErr != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, respErr)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+				Ok:      false,
+				Message: respErr.Error(),
+			})
 			return
 		}
 		if !respStr {
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, forms.BasicResponse{
+				Ok:      false,
+				Message: "NotFound",
+			})
 			return
 		}
 	}

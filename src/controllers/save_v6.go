@@ -1,5 +1,6 @@
 package controllers
 
+/*
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -65,3 +66,4 @@ func RestoreRulesV6(c *gin.Context) {
 		return
 	}
 }
+*/
