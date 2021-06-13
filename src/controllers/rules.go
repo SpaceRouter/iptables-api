@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jeremmfr/go-iptables/iptables"
 	"iptables-api/forms"
@@ -141,9 +140,6 @@ func checkPosRules(c *gin.Context) ([]string, error) {
 
 // AddRules PUT /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func AddRules(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-
 	ok, err := checkRole(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
@@ -163,17 +159,23 @@ func AddRules(c *gin.Context) {
 	rulespecs := ruleGenerate(c)
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
 
-	if r.URL.Query().Get("position") != "" {
-		position, err := strconv.Atoi(r.URL.Query().Get("position"))
+	if c.Query("position") != "" {
+		position, err := strconv.Atoi(c.Query("position"))
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+				Ok:      false,
+				Message: err.Error(),
+			})
 			return
 		}
 		respErr = ipt.Insert("filter", c.Param("chain"), position, rulespecs...)
@@ -181,15 +183,16 @@ func AddRules(c *gin.Context) {
 		respErr = ipt.Append("filter", c.Param("chain"), rulespecs...)
 	}
 	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+			Ok:      false,
+			Message: respErr.Error(),
+		})
+		return
 	}
 }
 
 // DelRules DELETE /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func DelRules(c *gin.Context) {
-	w := c.Writer
-
 	ok, err := checkRole(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
@@ -201,7 +204,7 @@ func DelRules(c *gin.Context) {
 	if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, forms.BasicResponse{
 			Ok:      false,
-			Message: "",
+			Message: "Unauthorized",
 		})
 		return
 	}
@@ -209,7 +212,10 @@ func DelRules(c *gin.Context) {
 	rulespecs := ruleGenerate(c)
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	if ipt.HasWait {
@@ -217,16 +223,16 @@ func DelRules(c *gin.Context) {
 	}
 	respErr = ipt.Delete("filter", c.Param("chain"), rulespecs...)
 	if respErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, respErr)
+		c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+			Ok:      false,
+			Message: respErr.Error(),
+		})
+		return
 	}
 }
 
 // CheckRules GET /rules/{action}/{chain}/{proto}/{iface_in}/{iface_out}/{source}/{destination}/?sports=00&dports=00
 func CheckRules(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-
 	ok, err := checkRole(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
@@ -246,40 +252,64 @@ func CheckRules(c *gin.Context) {
 	rulespecs := ruleGenerate(c)
 	ipt, err := iptables.New()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+			Ok:      false,
+			Message: err.Error(),
+		})
 		return
 	}
 	if ipt.HasWait {
 		rulespecs = append(rulespecs, "--wait")
 	}
-	if r.URL.Query().Get("position") != "" {
+	if c.Query("position") != "" {
 		posRules, err := checkPosRules(c)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, forms.BasicResponse{
+				Ok:      false,
+				Message: err.Error(),
+			})
 			return
 		}
 		switch {
 		case len(posRules) == 0:
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, forms.BasicResponse{
+				Ok:      false,
+				Message: "NotFound",
+			})
 			return
 		case len(posRules) != 1:
-			w.WriteHeader(http.StatusConflict)
+			c.AbortWithStatusJSON(http.StatusConflict, forms.BasicResponse{
+				Ok:      false,
+				Message: "Conflict",
+			})
 			return
-		case posRules[0] == r.URL.Query().Get("position"):
+		case posRules[0] == c.Query("position"):
+			c.JSON(http.StatusOK, forms.BasicResponse{
+				Ok:      true,
+				Message: "",
+			})
 			return
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusConflict, forms.BasicResponse{
+				Ok:      false,
+				Message: "Conflict",
+			})
 			return
 		}
 	} else {
 		respStr, respErr := ipt.Exists("filter", c.Param("chain"), rulespecs...)
 		if respErr != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, respErr)
+			c.AbortWithStatusJSON(http.StatusBadRequest, forms.BasicResponse{
+				Ok:      false,
+				Message: respErr.Error(),
+			})
 			return
 		}
 		if !respStr {
-			w.WriteHeader(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, forms.BasicResponse{
+				Ok:      false,
+				Message: "NotFound",
+			})
 			return
 		}
 	}
