@@ -7,6 +7,12 @@ RELEASE_PACKAGE:=ldesplanche/$(NAME)
 
 DOCKER_ARGS:=-v /var/run/docker.sock:/var/run/docker.sock -v ./compose:/compose -p 8082:8082
 
+
+.PHONY: swag
+docker:
+	@swag init
+
+
 .PHONY: docker
 docker:
 	@docker run -v "$(ROOT_DIR)/src":"/web" $(DOCKER_ARGS) -p 8080:8080 --name "$(RELEASE_PACKAGE)_dev" --rm ldesplanche/marketplace_dev

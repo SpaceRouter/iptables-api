@@ -14,12 +14,6 @@ func NewRouter(savePath string) *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	auth := sr_auth.CreateAuth(config.GetSecretKey(), config.GetAuthServer(), nil)
-	err := auth.PingAuthServer()
-	if err != nil {
-		log.Fatal(err)
-	}
-	router.Use(auth.SrAuthMiddlewareGin())
 	router.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
 		Methods:         "GET, PUT, POST, DELETE",
@@ -28,6 +22,14 @@ func NewRouter(savePath string) *gin.Engine {
 		Credentials:     true,
 		ValidateHeaders: false,
 	}))
+
+	auth := sr_auth.CreateAuth(config.GetSecretKey(), config.GetAuthServer(), nil)
+	err := auth.PingAuthServer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router.Use(auth.SrAuthMiddlewareGin())
 
 	s := controllers.SaveStruct{SavePath: savePath}
 

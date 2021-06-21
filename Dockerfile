@@ -8,8 +8,6 @@ WORKDIR /source
 RUN apk add gcc
 
 RUN go get && \
- go get -u github.com/swaggo/swag/cmd/swag && \
- swag init && \
  go build -o /usr/bin/$APP_NAME && \
  rm -rf $GOPATH/pkg/
 
