@@ -3,4 +3,4 @@ server:
   port: 8081
 security:
   secret_key: JESUISHYPERFANDESEXE
-  auth_server: http://localhost:8085
+  auth_server: http://localhost:8085/auth
