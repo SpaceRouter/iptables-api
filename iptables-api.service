@@ -1,0 +1,12 @@
+[Unit]
+Description=Iptables API
+
+
+[Service]
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/bin/iptables-api
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
