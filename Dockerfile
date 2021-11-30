@@ -1,6 +1,6 @@
 FROM golang:rc-alpine
 
-ENV APP_NAME docker_api
+ENV APP_NAME iptables_api
 
 COPY src /source
 WORKDIR /source
